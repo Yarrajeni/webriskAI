@@ -239,7 +239,10 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
         return (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="fade-in">
             <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Security Code</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Sent to {value}.</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Sent to {value}.</p>
+            <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--accent-primary)', fontSize: '0.85rem', marginBottom: '1.5rem', textAlign: 'center', border: '1px solid var(--accent-primary)' }}>
+              <strong>Demo Mode:</strong> Please enter <strong>123456</strong> to proceed.
+            </div>
             <form onSubmit={handleSubmitOtp}>
               <input 
                 type="text" maxLength="6" required value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="000000"
