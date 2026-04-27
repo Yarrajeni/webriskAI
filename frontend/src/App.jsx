@@ -103,11 +103,11 @@ function App() {
       <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
         <div className="ticker-container" style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', sticky: 'top', top: 0, zIndex: 50 }}>
           <div className="ticker-wrapper">
-            <span className="ticker-item">BTC <span className="ticker-price">$64,281.20</span> <span className="ticker-up">▲ 2.4%</span></span>
-            <span className="ticker-item">ETH <span className="ticker-price">$3,142.15</span> <span className="ticker-down">▼ 0.8%</span></span>
-            <span className="ticker-item">SPY <span className="ticker-price">$512.30</span> <span className="ticker-up">▲ 0.1%</span></span>
+            <span className="ticker-item">BTC <span className="ticker-price">₹64,281.20</span> <span className="ticker-up">▲ 2.4%</span></span>
+            <span className="ticker-item">ETH <span className="ticker-price">₹3,142.15</span> <span className="ticker-down">▼ 0.8%</span></span>
+            <span className="ticker-item">SPY <span className="ticker-price">₹512.30</span> <span className="ticker-up">▲ 0.1%</span></span>
             <span className="ticker-item">VIX <span className="ticker-price">14.25</span> <span className="ticker-down">▼ 4.2%</span></span>
-            <span className="ticker-item">NVDA <span className="ticker-price">$894.52</span> <span className="ticker-up">▲ 4.8%</span></span>
+            <span className="ticker-item">NVDA <span className="ticker-price">₹894.52</span> <span className="ticker-up">▲ 4.8%</span></span>
           </div>
         </div>
         {renderContent()}

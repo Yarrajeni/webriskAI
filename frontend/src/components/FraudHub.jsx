@@ -75,7 +75,7 @@ const FraudHub = () => {
                     <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={14} /> {event.location}</div>
                     </td>
-                    <td style={{ padding: '1.25rem 1rem', fontWeight: 800 }}>${event.amount.toLocaleString()}</td>
+                    <td style={{ padding: '1.25rem 1rem', fontWeight: 800 }}>₹{event.amount.toLocaleString()}</td>
                     <td style={{ padding: '1.25rem 1rem' }}>
                       <span style={{ 
                         fontSize: '0.7rem', fontWeight: 800, padding: '4px 8px', borderRadius: '6px',

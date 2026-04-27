@@ -191,9 +191,9 @@ def export_pdf(assessment_id: int, db: Session = Depends(get_db)):
     y = height - 300
     params = [
         f"Credit Score: {assessment.credit_score}",
-        f"Annual Income: ${assessment.income}",
-        f"Loan Amount: ${assessment.loan_amount}",
-        f"Current Debt: ${assessment.debt}",
+        f"Annual Income: ₹{assessment.income}",
+        f"Loan Amount: ₹{assessment.loan_amount}",
+        f"Current Debt: ₹{assessment.debt}",
         f"Late Payments: {assessment.late_payments}",
         f"Pattern: {assessment.pattern}"
     ]

@@ -21,7 +21,8 @@ const RiskForm = () => {
     credit_score: '',
     debt: '',
     late_payments: '',
-    pattern: 'Stable'
+    pattern: 'Stable',
+    phone: ''
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -73,11 +74,11 @@ const RiskForm = () => {
                 <input type="number" required value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Annual Income ($)</label>
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Annual Income (₹)</label>
                 <input type="number" required value={formData.income} onChange={(e) => setFormData({...formData, income: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Loan Amount ($)</label>
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Loan Amount (₹)</label>
                 <input type="number" required value={formData.loan_amount} onChange={(e) => setFormData({...formData, loan_amount: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
               </div>
               <div>
@@ -85,12 +86,16 @@ const RiskForm = () => {
                 <input type="number" required value={formData.credit_score} onChange={(e) => setFormData({...formData, credit_score: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Current Debt ($)</label>
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Current Debt (₹)</label>
                 <input type="number" required value={formData.debt} onChange={(e) => setFormData({...formData, debt: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Late Payments (Count)</label>
                 <input type="number" required value={formData.late_payments} onChange={(e) => setFormData({...formData, late_payments: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Phone Number (India)</label>
+                <input type="tel" placeholder="+91 99999-99999" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }} />
               </div>
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Transaction Pattern</label>

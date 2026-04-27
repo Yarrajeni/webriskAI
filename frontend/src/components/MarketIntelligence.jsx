@@ -73,7 +73,7 @@ const MarketIntelligence = () => {
             {[...MOCK_STOCKS, ...MOCK_STOCKS].map((stock, i) => (
               <div key={i} className="ticker-item">
                 <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{stock.symbol}</span>
-                <span className="ticker-price">${stock.price}</span>
+                <span className="ticker-price">₹{stock.price}</span>
                 <span className={stock.trend === 'up' ? 'ticker-up' : 'ticker-down'} style={{ marginLeft: '8px' }}>
                   {stock.trend === 'up' ? '▲' : '▼'} {Math.abs(stock.change)}%
                 </span>
@@ -116,7 +116,7 @@ const MarketIntelligence = () => {
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{stock.name}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontWeight: 700, margin: 0, color: 'white' }}>${stock.price}</p>
+                  <p style={{ fontWeight: 700, margin: 0, color: 'white' }}>₹{stock.price}</p>
                   <p style={{ fontSize: '0.75rem', color: stock.trend === 'up' ? 'var(--risk-low)' : 'var(--risk-high)', margin: 0 }}>
                     {stock.trend === 'up' ? '+' : ''}{stock.change}%
                   </p>
@@ -136,7 +136,7 @@ const MarketIntelligence = () => {
                   <span style={{ padding: '4px 12px', borderRadius: '8px', background: 'var(--bg-tertiary)', fontSize: '0.875rem', fontWeight: 600 }}>{selectedStock.symbol}</span>
                 </div>
                 <p style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0 }}>
-                  ${selectedStock.price} 
+                  ₹{selectedStock.price} 
                   <span style={{ fontSize: '1.25rem', color: selectedStock.trend === 'up' ? 'var(--risk-low)' : 'var(--risk-high)', marginLeft: '12px', fontWeight: 600 }}>
                     {selectedStock.trend === 'up' ? '+' : ''}{selectedStock.change}%
                   </span>

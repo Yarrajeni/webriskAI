@@ -81,8 +81,8 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
                   <Mail size={24} color="var(--accent-primary)" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, margin: 0 }}>Email ID</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Secure access via corporate mail</p>
+                  <p style={{ fontWeight: 700, margin: 0 }}>Login with Email ID</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Secure access via verified work/personal mail</p>
                 </div>
                 <ArrowRight size={20} color="var(--text-muted)" />
               </button>
@@ -96,8 +96,8 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
                   <Phone size={24} color="var(--accent-secondary)" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, margin: 0 }}>Phone Number</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Fast login via mobile SMS</p>
+                  <p style={{ fontWeight: 700, margin: 0 }}>Phone Number (India)</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Fast OTP login via +91 mobile</p>
                 </div>
                 <ArrowRight size={20} color="var(--text-muted)" />
               </button>
@@ -150,7 +150,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
                     required 
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
-                    placeholder={method === 'phone' ? '+1 (555) 000-0000' : 'name@company.com'}
+                    placeholder={method === 'phone' ? '+91 99999-99999' : 'yourname@email.com'}
                     style={{ width: '100%', padding: '0.85rem 0.85rem 0.85rem 2.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'white' }}
                   />
                 </div>

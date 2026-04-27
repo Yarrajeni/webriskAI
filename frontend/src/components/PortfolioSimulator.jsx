@@ -62,7 +62,7 @@ const PortfolioSimulator = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.1em' }}>TOTAL ASSET VALUE</p>
-                  <h2 style={{ fontSize: '3rem', margin: '0.5rem 0' }}>${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</h2>
+                  <h2 style={{ fontSize: '3rem', margin: '0.5rem 0' }}>₹{totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--risk-low)' }}>
                     <TrendingUp size={18} />
                     <span style={{ fontWeight: 800 }}>+12.4% (YTD)</span>
@@ -106,7 +106,7 @@ const PortfolioSimulator = () => {
                     <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: s.risk === 'Low' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', color: s.risk === 'Low' ? 'var(--risk-low)' : 'var(--risk-high)' }}>{s.risk}</span>
                   </div>
                   <p style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{s.qty} Units</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Avg Price: ${s.price}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Avg Price: ₹{s.price}</p>
                 </div>
               ))}
             </div>
@@ -166,12 +166,12 @@ const PortfolioSimulator = () => {
              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem' }}>
                  <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--risk-low)' }}><Plus size={14} /></div>
-                 <div style={{ flex: 1 }}>Bought 5 NVDA @ $894.12</div>
+                 <div style={{ flex: 1 }}>Bought 5 NVDA @ ₹894.12</div>
                  <ArrowRight size={14} color="var(--text-muted)" />
                </div>
                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem' }}>
                  <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--risk-high)' }}><Minus size={14} /></div>
-                 <div style={{ flex: 1 }}>Sold 10 AAPL @ $172.45</div>
+                 <div style={{ flex: 1 }}>Sold 10 AAPL @ ₹172.45</div>
                  <ArrowRight size={14} color="var(--text-muted)" />
                </div>
              </div>
