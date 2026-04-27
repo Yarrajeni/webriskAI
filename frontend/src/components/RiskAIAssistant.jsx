@@ -91,7 +91,7 @@ const RiskAIAssistant = () => {
                 </div>
                 <div>
                   <p style={{ fontWeight: 800, margin: 0, fontSize: '0.95rem' }}>RiskAI Assistant</p>
-                  <p style={{ fontSize: '0.65rem', opacity: 0.8, margin: 0 }}>Active • Neural Engine v4.2</p>
+                  <p style={{ fontSize: '0.65rem', opacity: 0.8, margin: 0 }}>Assigned Agent • Neural Engine v4.2</p>
                 </div>
               </div>
               <button onClick={() => setIsOpen(false)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}>
