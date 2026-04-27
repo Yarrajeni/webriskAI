@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  riskai-platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/risk_app.db:/app/risk_app.db
+    environment:
+      - DATABASE_URL=sqlite:///./risk_app.db
+    restart: always
+
+networks:
+  default:
+    name: riskai-network

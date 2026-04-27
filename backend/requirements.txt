@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+reportlab
+python-multipart
+aiofiles
+pandas
+numpy
+scikit-learn
+evidently
+mlflow
