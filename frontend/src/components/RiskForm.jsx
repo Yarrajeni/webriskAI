@@ -31,7 +31,7 @@ const RiskForm = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || '';
       const response = await axios.post(`${apiUrl}/predict`, formData);
       setResult(response.data);
     } catch (err) {
@@ -55,7 +55,8 @@ const RiskForm = () => {
 
   const handleExport = () => {
     if (!result || !result.id) return;
-    window.open(`http://localhost:8000/export/pdf/${result.id}`, '_blank');
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    window.open(`${apiUrl}/export/pdf/${result.id}`, '_blank');
   };
 
   return (

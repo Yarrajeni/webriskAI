@@ -45,7 +45,7 @@ const ModelMonitoring = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const apiUrl = import.meta.env.VITE_API_URL || '';
         const response = await axios.get(`${apiUrl}/monitoring/drift`);
         setDrift(response.data);
       } catch (err) {

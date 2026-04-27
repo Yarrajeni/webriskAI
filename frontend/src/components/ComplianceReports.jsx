@@ -19,7 +19,7 @@ const ComplianceReports = () => {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || '';
       const response = await axios.get(`${apiUrl}/reports/all`);
       setReports(response.data);
     } catch (err) {
@@ -34,7 +34,8 @@ const ComplianceReports = () => {
   }, []);
 
   const handleDownload = (id) => {
-    window.open(`http://localhost:8000/export/pdf/${id}`, '_blank');
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    window.open(`${apiUrl}/export/pdf/${id}`, '_blank');
   };
 
   return (

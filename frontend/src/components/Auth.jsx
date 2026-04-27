@@ -58,7 +58,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const handleAuthComplete = async (role = 'user') => {
     setError('');
     setLoading(true);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const apiUrl = import.meta.env.VITE_API_URL || '';
     
     try {
       if (mode === 'signup') {
