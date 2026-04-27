@@ -159,6 +159,16 @@ const Settings = ({ user }) => {
                 </div>
                 <ToggleLeft color="var(--text-muted)" size={24} style={{ cursor: 'pointer' }} />
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gridColumn: 'span 2', marginTop: '1rem', padding: '1rem', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-primary)', boxShadow: '0 0 10px var(--accent-primary)' }}></div>
+                  <div>
+                    <p style={{ fontWeight: 700, margin: 0, fontSize: '0.85rem' }}>Assigned Platform Agent</p>
+                    <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>Antigravity AI (Active Support)</p>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verified Enterprise</span>
+              </div>
             </div>
           </div>
 
