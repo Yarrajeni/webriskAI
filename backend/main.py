@@ -6,7 +6,7 @@ import time
 import json
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import create_all, create_engine, Column, Integer, String, Float, DateTime, JSON, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from reportlab.lib.pagesizes import letter
