@@ -73,7 +73,7 @@ const Landing = ({ onGetStarted, onSignIn }) => {
             style={{ 
               background: 'transparent', 
               border: 'none', 
-              color: 'white', 
+              color: 'var(--text-secondary)', 
               fontWeight: 700, 
               cursor: 'pointer',
               fontSize: '0.9rem'
@@ -84,17 +84,17 @@ const Landing = ({ onGetStarted, onSignIn }) => {
           <button 
             onClick={onGetStarted}
             style={{ 
-              background: 'var(--accent-primary)', 
-              color: 'white', 
+              background: 'rgba(56, 189, 248, 0.1)', 
+              color: 'var(--accent-primary)', 
               padding: '0.75rem 1.5rem', 
               borderRadius: '12px', 
-              border: 'none', 
+              border: '1px solid var(--accent-primary)', 
               fontWeight: 700, 
               cursor: 'pointer',
-              boxShadow: '0 10px 20px rgba(56, 189, 248, 0.3)'
+              fontSize: '0.9rem'
             }}
           >
-            Get Started
+            Create Account
           </button>
         </div>
       </nav>
