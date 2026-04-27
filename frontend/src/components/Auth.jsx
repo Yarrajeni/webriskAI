@@ -48,6 +48,10 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const handleSubmitOtp = (e) => {
     e.preventDefault();
     setError('');
+    if (otp !== '123456') {
+      setError('Invalid security code. Please use the demo code provided.');
+      return;
+    }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
