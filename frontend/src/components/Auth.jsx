@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { 
   Phone, 
   Mail, 
@@ -23,6 +24,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const [value, setValue] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleChoice = (choice) => {
     if (choice === 'guest') {
@@ -35,28 +37,52 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
 
   const handleSubmitInput = (e) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
       setStep(mode === 'signup' ? 'otp' : 'password_login');
-    }, 1200);
+    }, 800);
   };
 
   const handleSubmitOtp = (e) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
       setStep('password_setup');
-    }, 1200);
+    }, 800);
   };
 
-  const handleAuthComplete = (role = 'user') => {
-    onLogin({ 
-      role: role, 
-      name: value.split('@')[0] || 'Member',
-      method 
-    });
+  const handleAuthComplete = async (role = 'user') => {
+    setError('');
+    setLoading(true);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
+    try {
+      if (mode === 'signup') {
+        const payload = {
+          password,
+          role,
+          name: value.split('@')[0] || 'Member',
+          [method]: value
+        };
+        await axios.post(`${apiUrl}/auth/register`, payload);
+      }
+      
+      // Login
+      const loginPayload = {
+        password,
+        [method]: value
+      };
+      const response = await axios.post(`${apiUrl}/auth/login`, loginPayload);
+      onLogin(response.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderStep = () => {
@@ -67,9 +93,15 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
             <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', textAlign: 'center' }}>
               {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
             </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', textAlign: 'center' }}>
               {mode === 'signup' ? 'Join the next generation of risk intelligence.' : 'Access your secure MLOps dashboard.'}
             </p>
+            
+            {error && (
+              <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--risk-high)', fontSize: '0.85rem', marginBottom: '1.5rem', textAlign: 'center', border: '1px solid var(--risk-high)' }}>
+                {error}
+              </div>
+            )}
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button onClick={() => handleChoice('email')} className="glass" style={{
@@ -137,9 +169,15 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
             <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>
               {method === 'phone' ? 'Mobile Number' : 'Work Email'}
             </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               Enter your {method} to continue.
             </p>
+
+            {error && (
+              <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--risk-high)', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid var(--risk-high)' }}>
+                {error}
+              </div>
+            )}
             
             <form onSubmit={handleSubmitInput}>
               <div style={{ marginBottom: '1.5rem' }}>
@@ -174,8 +212,13 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
         return (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="fade-in">
              <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Verify Password</h2>
-             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Welcome back, {value}. Please enter your password.</p>
-             <form onSubmit={(e) => { e.preventDefault(); setStep('role_select'); }}>
+             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Welcome back, {value}. Please enter your password.</p>
+             {error && (
+              <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--risk-high)', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid var(--risk-high)' }}>
+                {error}
+              </div>
+            )}
+             <form onSubmit={(e) => { e.preventDefault(); handleAuthComplete(); }}>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <div style={{ position: 'relative' }}>
                     <Lock size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />

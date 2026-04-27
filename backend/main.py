@@ -26,9 +26,11 @@ Base = declarative_base()
 class DBUser(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    phone = Column(String, unique=True, index=True)
     role = Column(String)
     password = Column(String)
+    name = Column(String)
 
 class DBRiskAssessment(Base):
     __tablename__ = "risk_assessments"
@@ -98,6 +100,55 @@ class RiskInput(BaseModel):
     debt: float
     late_payments: int
     pattern: str
+
+class UserRegister(BaseModel):
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    password: str
+    role: str
+    name: str
+
+class UserLogin(BaseModel):
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    password: str
+
+@app.post("/auth/register")
+def register(user: UserRegister, db: Session = Depends(get_db)):
+    # Check if exists
+    existing = None
+    if user.email:
+        existing = db.query(DBUser).filter(DBUser.email == user.email).first()
+    elif user.phone:
+        existing = db.query(DBUser).filter(DBUser.phone == user.phone).first()
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+    
+    db_user = DBUser(
+        email=user.email,
+        phone=user.phone,
+        password=user.password, # In real app, hash this
+        role=user.role,
+        name=user.name
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return {"message": "User created", "user": {"email": db_user.email, "role": db_user.role, "name": db_user.name}}
+
+@app.post("/auth/login")
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = None
+    if user.email:
+        db_user = db.query(DBUser).filter(DBUser.email == user.email).first()
+    elif user.phone:
+        db_user = db.query(DBUser).filter(DBUser.phone == user.phone).first()
+    
+    if not db_user or db_user.password != user.password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    return {"email": db_user.email, "role": db_user.role, "name": db_user.name}
 
 @app.post("/predict")
 def predict_risk(data: RiskInput, db: Session = Depends(get_db)):
