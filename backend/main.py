@@ -73,10 +73,9 @@ app.add_middleware(
 )
 
 # Serve Static Files (Frontend)
-# In production, the built frontend is in the 'static' folder
-static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+static_dir = os.path.join(os.getcwd(), "frontend", "dist")
 if not os.path.exists(static_dir):
-    # Fallback for local development if running from backend folder
+    # Fallback for local dev if dist is not built
     static_dir = os.path.join(os.getcwd(), "static")
 
 if os.path.exists(static_dir):
