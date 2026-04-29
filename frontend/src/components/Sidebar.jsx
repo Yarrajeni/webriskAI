@@ -93,8 +93,14 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout }) => {
 
       <nav style={{ flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
         <ul style={{ listStyle: 'none' }}>
-          {menuItems.map((item) => (
-            <li key={item.id} style={{ marginBottom: '0.25rem' }}>
+          {menuItems.map((item, index) => (
+            <motion.li 
+              key={item.id} 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              style={{ marginBottom: '0.25rem' }}
+            >
               <motion.button
                 whileHover={{ x: 5 }}
                 whileTap={{ scale: 0.98 }}
@@ -132,7 +138,7 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout }) => {
                 <item.icon size={16} color={activeTab === item.id ? 'var(--accent-primary)' : 'currentColor'} strokeWidth={activeTab === item.id ? 2.5 : 2} />
                 <span style={{ fontWeight: activeTab === item.id ? 700 : 500, fontSize: '0.8rem' }}>{item.label}</span>
               </motion.button>
-            </li>
+            </motion.li>
           ))}
         </ul>
       </nav>

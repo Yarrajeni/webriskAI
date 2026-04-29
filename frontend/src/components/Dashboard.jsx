@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Users, 
   ShieldAlert, 
@@ -7,7 +8,8 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   Activity,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -20,6 +22,7 @@ import {
   LineChart, 
   Line 
 } from 'recharts';
+import { motion } from 'framer-motion';
 import RiskMap from './RiskMap';
 
 const data = [
@@ -32,25 +35,68 @@ const data = [
   { name: 'Sun', risk: 34, fraud: 43 },
 ];
 
-const StatCard = ({ title, value, change, icon: Icon, color }) => (
-  <div className="glass" style={{ padding: '1.5rem', flex: 1 }}>
+const StatCard = ({ title, value, change, icon: Icon, color, loading, delay = 0 }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay }}
+    whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+    className="glass" 
+    style={{ padding: '1.5rem', flex: 1, minWidth: '240px', cursor: 'default' }}
+  >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div style={{ background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '12px' }}>
         <Icon color={color} size={24} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: change.startsWith('+') ? 'var(--risk-low)' : 'var(--risk-high)' }}>
-        <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>{change}</span>
-        {change.startsWith('+') ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-      </div>
+      {!loading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: change.startsWith('+') ? 'var(--risk-low)' : 'var(--risk-high)' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>{change}</span>
+          {change.startsWith('+') ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+        </div>
+      )}
     </div>
     <div style={{ marginTop: '1.25rem' }}>
       <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>{title}</p>
-      <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>{value}</h3>
+      {loading ? (
+        <div style={{ height: '2.25rem', width: '60%', background: 'var(--bg-tertiary)', borderRadius: '4px', marginTop: '0.5rem', animation: 'pulse 1.5s infinite' }}></div>
+      ) : (
+        <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>{value}</h3>
+      )}
     </div>
-  </div>
+  </motion.div>
 );
 
 const Dashboard = () => {
+  const [stats, setStats] = useState({
+    total_customers: '12,491',
+    high_risk_alerts: '156',
+    model_accuracy: '94.2%',
+    avg_risk_score: '42.5'
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await axios.get(`${apiUrl}/dashboard/stats`);
+        const data = response.data;
+        setStats({
+          total_customers: data.total_customers.toLocaleString(),
+          high_risk_alerts: data.high_risk_alerts.toString(),
+          model_accuracy: `${data.model_accuracy}%`,
+          avg_risk_score: data.avg_risk_score.toString()
+        });
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="fade-in" style={{ padding: '2rem' }}>
       <header style={{ marginBottom: '2.5rem' }}>
@@ -58,14 +104,14 @@ const Dashboard = () => {
         <p style={{ color: 'var(--text-secondary)' }}>Enterprise-grade financial risk intelligence and model observability.</p>
       </header>
 
-      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        <StatCard title="Total Customers" value="12,491" change="+12%" icon={Users} color="var(--accent-primary)" />
-        <StatCard title="High Risk Alerts" value="156" change="+5%" icon={AlertTriangle} color="var(--risk-high)" />
-        <StatCard title="Model Accuracy" value="94.2%" change="+0.4%" icon={CheckCircle} color="var(--risk-low)" />
-        <StatCard title="Avg Risk Score" value="42.5" change="-2.1%" icon={Activity} color="var(--accent-secondary)" />
+      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
+        <StatCard title="Total Customers" value={stats.total_customers} change="+12%" icon={Users} color="var(--accent-primary)" loading={loading} delay={0.1} />
+        <StatCard title="High Risk Alerts" value={stats.high_risk_alerts} change="+5%" icon={AlertTriangle} color="var(--risk-high)" loading={loading} delay={0.2} />
+        <StatCard title="Model Accuracy" value={stats.model_accuracy} change="+0.4%" icon={CheckCircle} color="var(--risk-low)" loading={loading} delay={0.3} />
+        <StatCard title="Avg Risk Score" value={stats.avg_risk_score} change="-2.1%" icon={Activity} color="var(--accent-secondary)" loading={loading} delay={0.4} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+      <div className="dashboard-grid" style={{ display: 'grid', gap: '1.5rem', marginBottom: '1.5rem' }}>
         <RiskMap />
         
         <div className="glass" style={{ padding: '2rem' }}>

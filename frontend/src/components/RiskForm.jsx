@@ -66,7 +66,7 @@ const RiskForm = () => {
         <p style={{ color: 'var(--text-secondary)' }}>Advanced credit scoring using deep ensemble learning and XAI.</p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap: '2.5rem', transition: 'all 0.5s ease' }}>
+      <div className={`risk-form-container-grid ${result ? 'has-result' : ''}`} style={{ display: 'grid', gap: '2.5rem', transition: 'all 0.5s ease' }}>
         <div className="glass" style={{ padding: '2.5rem' }}>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>

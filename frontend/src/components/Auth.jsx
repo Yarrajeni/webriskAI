@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Phone, 
@@ -15,6 +15,7 @@ import {
   Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const [mode, setMode] = useState(initialMode); // 'signin' or 'signup'
@@ -25,38 +26,76 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [timer, setTimer] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const handleChoice = (choice) => {
     if (choice === 'guest') {
-      onLogin({ role: 'user', name: 'Guest User' });
+      onLogin({ role: 'guest', name: 'Guest User' });
     } else {
       setMethod(choice);
       setStep('input');
     }
   };
 
-  const handleSubmitInput = (e) => {
+  const handleSubmitInput = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Basic validation
+    if (method === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+    } else if (method === 'phone') {
+      if (value.length < 10) {
+        setError('Please enter a valid phone number.');
+        return;
+      }
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      await axios.post(`${apiUrl}/auth/send-otp`, {
+        identifier: value,
+        method: method
+      });
       setStep(mode === 'signup' ? 'otp' : 'password_login');
-    }, 800);
+      setTimer(60);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to send verification code.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmitOtp = (e) => {
+  const handleSubmitOtp = async (e) => {
     e.preventDefault();
     setError('');
-    if (otp !== '123456') {
-      setError('Invalid security code. Please use the demo code provided.');
-      return;
-    }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      await axios.post(`${apiUrl}/auth/verify-otp`, {
+        identifier: value,
+        code: otp
+      });
       setStep('password_setup');
-    }, 800);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Invalid verification code.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAuthComplete = async (role = 'user') => {
@@ -66,16 +105,21 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
     
     try {
       if (mode === 'signup') {
+        // Extract name from email or set a friendly default for phone
+        const extractedName = method === 'email' 
+          ? (value.split('@')[0].charAt(0).toUpperCase() + value.split('@')[0].slice(1)) 
+          : `Member ${value.slice(-4)}`;
+
         const payload = {
           password,
           role,
-          name: value.split('@')[0] || 'Member',
+          name: extractedName,
           [method]: value
         };
         await axios.post(`${apiUrl}/auth/register`, payload);
       }
       
-      // Login
+      // Login attempt
       const loginPayload = {
         password,
         [method]: value
@@ -83,11 +127,38 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
       const response = await axios.post(`${apiUrl}/auth/login`, loginPayload);
       onLogin(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Authentication failed. Please try again.');
+      const errorMessage = err.response?.data?.detail || 'Authentication failed. Please check your credentials.';
+      setError(errorMessage);
+      // If registration failed because user exists, maybe they should be in signin mode
+      if (errorMessage.includes('already exists')) {
+        setMode('signin');
+        setStep('choice');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      setError('');
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await axios.post(`${apiUrl}/auth/google`, {
+          token: tokenResponse.access_token
+        });
+        onLogin(response.data);
+      } catch (err) {
+        setError(err.response?.data?.detail || 'Google authentication failed.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setError('Google Login failed. Please try again.');
+    }
+  });
 
   const renderStep = () => {
     switch (step) {
@@ -108,6 +179,29 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
             )}
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <button onClick={() => handleGoogleLogin()} className="glass" style={{
+                display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.25rem', width: '100%',
+                border: '1px solid var(--accent-primary)', background: 'rgba(56, 189, 248, 0.05)', color: 'white',
+                borderRadius: '16px', cursor: 'pointer', textAlign: 'left', position: 'relative', overflow: 'hidden'
+              }}>
+                <div style={{ background: 'white', padding: '0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontWeight: 800, margin: 0 }}>Continue with Google</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>One-click secure Gmail access</p>
+                </div>
+                <div style={{ 
+                  position: 'absolute', right: '-10px', top: '-10px', width: '60px', height: '60px', 
+                  background: 'var(--accent-primary)', opacity: 0.05, borderRadius: '50%' 
+                }}></div>
+              </button>
+
               <button onClick={() => handleChoice('email')} className="glass" style={{
                 display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.25rem', width: '100%',
                 border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', color: 'white',
@@ -118,7 +212,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 700, margin: 0 }}>Login with Email ID</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Secure access via verified work/personal mail</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Secure access via password</p>
                 </div>
                 <ArrowRight size={20} color="var(--text-muted)" />
               </button>

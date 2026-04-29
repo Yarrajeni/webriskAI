@@ -9,6 +9,11 @@ from typing import List, Optional
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from twilio.rest import Client as TwilioClient
+import os
+import random
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -113,20 +118,46 @@ class UserLogin(BaseModel):
     phone: Optional[str] = None
     password: str
 
+class GoogleLogin(BaseModel):
+    token: str
+
+# Google Client ID from environment
+GOOGLE_CLIENT_ID = os.getenv("VITE_GOOGLE_CLIENT_ID", "your_google_client_id_here")
+
+# Twilio Configuration
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+
+# OTP Store (In-memory for demo, should use Redis/DB for production)
+otp_store = {}
+
+class OTPRequest(BaseModel):
+    identifier: str
+    method: str
+
+class OTPVerify(BaseModel):
+    identifier: str
+    code: str
+
 @app.post("/auth/register")
 def register(user: UserRegister, db: Session = Depends(get_db)):
+    # Normalize email
+    normalized_email = user.email.lower() if user.email else None
+    
     # Check if exists
     existing = None
-    if user.email:
-        existing = db.query(DBUser).filter(DBUser.email == user.email).first()
+    if normalized_email:
+        existing = db.query(DBUser).filter(DBUser.email == normalized_email).first()
     elif user.phone:
         existing = db.query(DBUser).filter(DBUser.phone == user.phone).first()
     
     if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
+        detail = "An account with this email already exists." if normalized_email else "An account with this phone number already exists."
+        raise HTTPException(status_code=400, detail=detail)
     
     db_user = DBUser(
-        email=user.email,
+        email=normalized_email,
         phone=user.phone,
         password=user.password, # In real app, hash this
         role=user.role,
@@ -135,20 +166,102 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return {"message": "User created", "user": {"email": db_user.email, "role": db_user.role, "name": db_user.name}}
+    return {"message": "User created", "user": {"email": db_user.email, "phone": db_user.phone, "role": db_user.role, "name": db_user.name}}
 
 @app.post("/auth/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
+    normalized_email = user.email.lower() if user.email else None
     db_user = None
-    if user.email:
-        db_user = db.query(DBUser).filter(DBUser.email == user.email).first()
+    
+    if normalized_email:
+        db_user = db.query(DBUser).filter(DBUser.email == normalized_email).first()
     elif user.phone:
         db_user = db.query(DBUser).filter(DBUser.phone == user.phone).first()
     
-    if not db_user or db_user.password != user.password:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not db_user:
+        raise HTTPException(status_code=401, detail="No account found with this identifier.")
+        
+    if db_user.password != user.password:
+        raise HTTPException(status_code=401, detail="Incorrect password. Please try again.")
     
-    return {"email": db_user.email, "role": db_user.role, "name": db_user.name}
+    return {
+        "email": db_user.email, 
+        "phone": db_user.phone, 
+        "role": db_user.role, 
+        "name": db_user.name,
+        "id": db_user.id
+    }
+
+@app.post("/auth/google")
+def google_auth(data: GoogleLogin, db: Session = Depends(get_db)):
+    try:
+        # Verify Google Token
+        idinfo = id_token.verify_oauth2_token(data.token, google_requests.Request(), GOOGLE_CLIENT_ID)
+        
+        # Extract user info
+        email = idinfo['email'].lower()
+        name = idinfo.get('name', email.split('@')[0])
+        
+        # Check if user exists
+        db_user = db.query(DBUser).filter(DBUser.email == email).first()
+        
+        if not db_user:
+            # Auto-register Google user
+            db_user = DBUser(
+                email=email,
+                name=name,
+                role="user",
+                password="social_login_no_password"
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            
+        return {
+            "email": db_user.email,
+            "role": db_user.role,
+            "name": db_user.name,
+            "id": db_user.id
+        }
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/auth/send-otp")
+def send_otp(request: OTPRequest):
+    code = str(random.randint(100000, 999999))
+    otp_store[request.identifier] = code
+    
+    print(f"\n[SECURITY] OTP for {request.identifier}: {code}")
+    
+    # Real SMS Delivery
+    if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER:
+        try:
+            client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+            client.messages.create(
+                body=f"Your RiskAI verification code is: {code}. Do not share this with anyone.",
+                from_=TWILIO_PHONE_NUMBER,
+                to=request.identifier if request.method == 'phone' else request.identifier
+            )
+        except Exception as e:
+            print(f"[ERROR] Twilio failed: {str(e)}")
+            # Don't fail the request in demo mode, let it fall back to console log
+    
+    return {"message": "OTP sent successfully"}
+
+@app.post("/auth/verify-otp")
+def verify_otp(request: OTPVerify):
+    if request.identifier in otp_store and otp_store[request.identifier] == request.code:
+        # Success - clean up
+        del otp_store[request.identifier]
+        return {"message": "OTP verified"}
+    
+    # Fallback for demo code 123456
+    if request.code == "123456":
+        return {"message": "OTP verified (demo bypass)"}
+        
+    raise HTTPException(status_code=401, detail="Invalid verification code")
 
 @app.post("/predict")
 def predict_risk(data: RiskInput, db: Session = Depends(get_db)):
