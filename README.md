@@ -26,6 +26,12 @@
 - **RiskAI Assistant**: A global neural chatbot providing context-aware platform support.
 - **EDA Data Room**: Comprehensive Exploratory Data Analysis with correlation heatmaps and feature distributions.
 - **Notification Engine**: Global push-alert system for critical risk and market events.
+- **Secure Auth Suite**: Single-click **Google Sign-In** and Real **SMS OTP** verification.
+
+---
+
+## 🔗 Repository Link
+**GitHub**: [https://github.com/Yarrajeni/webriskAI](https://github.com/Yarrajeni/webriskAI)
 
 ---
 
