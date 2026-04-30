@@ -2,6 +2,4 @@ services:
 - type: web
   name: webriskai
     env: docker
-      dockerContext: .
-        dockerfilePath: Dockerfile
-          plan: free
+      plan: free
