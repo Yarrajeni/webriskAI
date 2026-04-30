@@ -14,3 +14,4 @@ twilio
 google-auth
 google-api-python-client
 python-dotenv
+firebase-admin

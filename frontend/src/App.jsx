@@ -21,7 +21,7 @@ import ApprovalQueue from './components/ApprovalQueue';
 import BenchmarkingStudio from './components/BenchmarkingStudio';
 import Auth from './components/Auth';
 import Landing from './components/Landing';
-import { GoogleOAuthProvider } from '@react-oauth/google';
+// import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function App() {
   const [user, setUser] = useState(null); 
@@ -87,7 +87,7 @@ function App() {
   };
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "dummy-client-id"}>
+    <>
       {!user && !showAuth ? (
         <Landing 
           onGetStarted={() => { setAuthMode('signup'); setShowAuth(true); }}
@@ -125,7 +125,7 @@ function App() {
           </main>
         </>
       )}
-    </GoogleOAuthProvider>
+    </>
   );
 }
 

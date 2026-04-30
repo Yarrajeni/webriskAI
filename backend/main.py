@@ -14,6 +14,8 @@ from google.auth.transport import requests as google_requests
 from twilio.rest import Client as TwilioClient
 import os
 import random
+import firebase_admin
+from firebase_admin import auth as firebase_auth, credentials
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -23,6 +25,22 @@ from fastapi.staticfiles import StaticFiles
 import os
 import smtplib
 from email.mime.text import MIMEText
+
+# Firebase Admin Setup
+firebase_creds_path = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+if firebase_creds_path:
+    try:
+        # Check if it's a JSON string or a file path
+        if firebase_creds_path.startswith('{'):
+            creds_dict = json.loads(firebase_creds_path)
+            cred = credentials.Certificate(creds_dict)
+        else:
+            cred = credentials.Certificate(firebase_creds_path)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(f"[ERROR] Firebase initialization failed: {str(e)}")
+else:
+    print("[WARNING] FIREBASE_SERVICE_ACCOUNT not set. Firebase features will be limited.")
 
 # Database Setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./risk_app.db"
@@ -122,6 +140,10 @@ class UserLogin(BaseModel):
 class GoogleLogin(BaseModel):
     token: str
 
+class FirebaseLogin(BaseModel):
+    token: str
+    method: str
+
 # SMTP Configuration for Email OTP
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
@@ -216,6 +238,47 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         "name": db_user.name,
         "id": db_user.id
     }
+
+@app.post("/auth/firebase")
+def firebase_login(data: FirebaseLogin, db: Session = Depends(get_db)):
+    try:
+        # Verify Firebase Token
+        decoded_token = firebase_auth.verify_id_token(data.token)
+        uid = decoded_token['uid']
+        email = decoded_token.get('email', '').lower()
+        name = decoded_token.get('name', email.split('@')[0] if email else f"User_{uid[:5]}")
+        phone = decoded_token.get('phone_number', '')
+
+        # Check if user exists
+        db_user = None
+        if email:
+            db_user = db.query(DBUser).filter(DBUser.email == email).first()
+        elif phone:
+            db_user = db.query(DBUser).filter(DBUser.phone == phone).first()
+            
+        if not db_user:
+            # Auto-register Firebase user
+            db_user = DBUser(
+                email=email,
+                phone=phone,
+                name=name,
+                role="user",
+                password="firebase_login_no_password"
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            
+        return {
+            "email": db_user.email,
+            "phone": db_user.phone,
+            "role": db_user.role,
+            "name": db_user.name,
+            "id": db_user.id
+        }
+    except Exception as e:
+        print(f"[ERROR] Firebase verification failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid Firebase token")
 
 @app.post("/auth/google")
 def google_auth(data: GoogleLogin, db: Session = Depends(get_db)):

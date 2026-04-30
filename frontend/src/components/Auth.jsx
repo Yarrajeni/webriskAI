@@ -15,7 +15,12 @@ import {
   Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGoogleLogin } from '@react-oauth/google';
+import { auth, googleProvider, RecaptchaVerifier } from '../firebase.config';
+import { 
+  signInWithPopup, 
+  signInWithPhoneNumber,
+  onAuthStateChanged
+} from 'firebase/auth';
 
 const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const [mode, setMode] = useState(initialMode); // 'signin' or 'signup'
@@ -27,6 +32,28 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(0);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [attempts, setAttempts] = useState(0);
+  const MAX_ATTEMPTS = 5;
+
+  useEffect(() => {
+    const checkAuth = onAuthStateChanged(auth, (user) => {
+      if (user && step !== 'password_setup' && step !== 'role_select') {
+        // Handle session recovery if needed
+      }
+    });
+    return () => checkAuth();
+  }, []);
+
+  const trackAttempt = () => {
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
+    if (newAttempts >= MAX_ATTEMPTS) {
+      setError('Too many attempts. Your access is temporarily restricted for security.');
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     let interval;
@@ -63,36 +90,71 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
       }
     }
 
+    if (!trackAttempt()) return;
     setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      await axios.post(`${apiUrl}/auth/send-otp`, {
-        identifier: value,
-        method: method
-      });
-      setStep(mode === 'signup' ? 'otp' : 'password_login');
+      if (method === 'phone') {
+        await setupRecaptcha();
+        const appVerifier = window.recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, value.startsWith('+') ? value : `+91${value}`, appVerifier);
+        setConfirmationResult(result);
+        setStep('otp');
+      } else {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        await axios.post(`${apiUrl}/auth/send-otp`, {
+          identifier: value,
+          method: method
+        });
+        setStep(mode === 'signup' ? 'otp' : 'password_login');
+      }
       setTimer(60);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to send verification code.');
+      console.error(err);
+      setError(err.message || 'Failed to send verification code.');
+      if (window.recaptchaVerifier) window.recaptchaVerifier.clear();
     } finally {
       setLoading(false);
     }
   };
 
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+          console.log("reCAPTCHA verified");
+        }
+      });
+    }
+  };
+
   const handleSubmitOtp = async (e) => {
     e.preventDefault();
+    if (!trackAttempt()) return;
     setError('');
     setLoading(true);
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      await axios.post(`${apiUrl}/auth/verify-otp`, {
-        identifier: value,
-        code: otp
-      });
-      setStep('password_setup');
+      if (method === 'phone' && confirmationResult) {
+        const result = await confirmationResult.confirm(otp);
+        const idToken = await result.user.getIdToken();
+        // Register/Login with Firebase token on our backend
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await axios.post(`${apiUrl}/auth/firebase`, {
+          token: idToken,
+          method: 'phone'
+        });
+        onLogin(response.data);
+      } else {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        await axios.post(`${apiUrl}/auth/verify-otp`, {
+          identifier: value,
+          code: otp
+        });
+        setStep('password_setup');
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid verification code.');
+      setError(err.message || 'Invalid verification code.');
     } finally {
       setLoading(false);
     }
@@ -139,26 +201,26 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
     }
   };
 
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true);
-      setError('');
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || '';
-        const response = await axios.post(`${apiUrl}/auth/google`, {
-          token: tokenResponse.access_token
-        });
-        onLogin(response.data);
-      } catch (err) {
-        setError(err.response?.data?.detail || 'Google authentication failed.');
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: () => {
-      setError('Google Login failed. Please try again.');
+  const handleGoogleLogin = async () => {
+    if (!trackAttempt()) return;
+    setLoading(true);
+    setError('');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await axios.post(`${apiUrl}/auth/firebase`, {
+        token: idToken,
+        method: 'google'
+      });
+      onLogin(response.data);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Google authentication failed.');
+    } finally {
+      setLoading(false);
     }
-  });
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -426,6 +488,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
         </div>
         {renderStep()}
       </div>
+      <div id="recaptcha-container"></div>
     </div>
   );
 };
