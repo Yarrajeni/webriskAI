@@ -15,7 +15,7 @@ import {
   Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, googleProvider, RecaptchaVerifier } from '../firebase.config';
+import { auth, googleProvider, RecaptchaVerifier, isFirebaseEnabled } from '../firebase.config';
 import { 
   signInWithPopup, 
   signInWithPhoneNumber,
@@ -37,6 +37,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
   const MAX_ATTEMPTS = 5;
 
   useEffect(() => {
+    if (!isFirebaseEnabled) return;
     const checkAuth = onAuthStateChanged(auth, (user) => {
       if (user && step !== 'password_setup' && step !== 'role_select') {
         // Handle session recovery if needed
@@ -74,6 +75,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
 
   const handleSubmitInput = async (e) => {
     e.preventDefault();
+    if (!trackAttempt()) return;
     setError('');
     
     // Basic validation
@@ -93,7 +95,7 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
     if (!trackAttempt()) return;
     setLoading(true);
     try {
-      if (method === 'phone') {
+      if (method === 'phone' && isFirebaseEnabled) {
         await setupRecaptcha();
         const appVerifier = window.recaptchaVerifier;
         const result = await signInWithPhoneNumber(auth, value.startsWith('+') ? value : `+91${value}`, appVerifier);
@@ -135,10 +137,9 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
     setLoading(true);
     
     try {
-      if (method === 'phone' && confirmationResult) {
+      if (method === 'phone' && confirmationResult && isFirebaseEnabled) {
         const result = await confirmationResult.confirm(otp);
         const idToken = await result.user.getIdToken();
-        // Register/Login with Firebase token on our backend
         const apiUrl = import.meta.env.VITE_API_URL || '';
         const response = await axios.post(`${apiUrl}/auth/firebase`, {
           token: idToken,
@@ -206,6 +207,11 @@ const Auth = ({ onLogin, initialMode = 'signin' }) => {
     setLoading(true);
     setError('');
     try {
+      if (!isFirebaseEnabled) {
+        setError('Google Sign-In is not configured yet. Please use Email or Phone login.');
+        setLoading(false);
+        return;
+      }
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
       const apiUrl = import.meta.env.VITE_API_URL || '';
