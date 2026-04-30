@@ -1,5 +1,5 @@
 services:
-- type: web
-  name: webriskai
-    env: docker
-      plan: free
+  - type: web
+      name: webriskai
+          env: docker
+              plan: free
