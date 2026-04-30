@@ -10,3 +10,7 @@ numpy
 scikit-learn
 evidently
 mlflow
+twilio
+google-auth
+google-api-python-client
+python-dotenv
