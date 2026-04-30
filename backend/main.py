@@ -21,6 +21,8 @@ import io
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
+import smtplib
+from email.mime.text import MIMEText
 
 # Database Setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./risk_app.db"
@@ -120,10 +122,34 @@ class UserLogin(BaseModel):
 class GoogleLogin(BaseModel):
     token: str
 
-# Google Client ID from environment
-GOOGLE_CLIENT_ID = os.getenv("VITE_GOOGLE_CLIENT_ID", "your_google_client_id_here")
+# SMTP Configuration for Email OTP
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASS = os.getenv("SMTP_PASS")
 
-# Twilio Configuration
+def send_email_otp(to_email, code):
+    if not all([SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS]):
+        print(f"[WARNING] SMTP not configured. OTP for {to_email}: {code}")
+        return False
+    
+    try:
+        msg = MIMEText(f"Your RiskAI verification code is: {code}. Do not share this with anyone.")
+        msg['Subject'] = 'RiskAI Verification Code'
+        msg['From'] = SMTP_USER
+        msg['To'] = to_email
+        
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        print(f"[ERROR] Email sending failed: {str(e)}")
+        return False
+
+# Google & Twilio Configuration
+GOOGLE_CLIENT_ID = os.getenv("VITE_GOOGLE_CLIENT_ID")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
@@ -234,18 +260,20 @@ def send_otp(request: OTPRequest):
     
     print(f"\n[SECURITY] OTP for {request.identifier}: {code}")
     
-    # Real SMS Delivery
-    if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER:
-        try:
-            client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-            client.messages.create(
-                body=f"Your RiskAI verification code is: {code}. Do not share this with anyone.",
-                from_=TWILIO_PHONE_NUMBER,
-                to=request.identifier if request.method == 'phone' else request.identifier
-            )
-        except Exception as e:
-            print(f"[ERROR] Twilio failed: {str(e)}")
-            # Don't fail the request in demo mode, let it fall back to console log
+    if request.method == 'email':
+        send_email_otp(request.identifier, code)
+    elif request.method == 'phone':
+        # Real SMS Delivery
+        if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER:
+            try:
+                client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+                client.messages.create(
+                    body=f"Your RiskAI verification code is: {code}. Do not share this with anyone.",
+                    from_=TWILIO_PHONE_NUMBER,
+                    to=request.identifier
+                )
+            except Exception as e:
+                print(f"[ERROR] Twilio failed: {str(e)}")
     
     return {"message": "OTP sent successfully"}
 
