@@ -27,12 +27,17 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Firebase Admin Setup
+# Prioritize Render Secret File if it exists, otherwise fall back to environment variable
+secret_file_path = "/etc/secrets/firebase-service-account.json"
 firebase_creds_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
-if firebase_creds_json:
-    try:
+
+try:
+    if os.path.exists(secret_file_path):
+        cred = credentials.Certificate(secret_file_path)
+        firebase_admin.initialize_app(cred)
+        print(f"[INFO] Firebase initialized using secret file: {secret_file_path}")
+    elif firebase_creds_json:
         if firebase_creds_json.startswith('{'):
-            # Handle potential double-escaping of newlines in the private key
-            # This is a common issue when setting JSON as an environment variable
             creds_dict = json.loads(firebase_creds_json)
             if "private_key" in creds_dict:
                 creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
@@ -40,10 +45,11 @@ if firebase_creds_json:
         else:
             cred = credentials.Certificate(firebase_creds_json)
         firebase_admin.initialize_app(cred)
-    except Exception as e:
-        print(f"[ERROR] Firebase initialization failed: {str(e)}")
-else:
-    print("[WARNING] FIREBASE_SERVICE_ACCOUNT not set. Firebase features will be limited.")
+        print("[INFO] Firebase initialized using environment variable.")
+    else:
+        print("[WARNING] Firebase credentials not found (no secret file or environment variable).")
+except Exception as e:
+    print(f"[ERROR] Firebase initialization failed: {str(e)}")
 
 # Database Setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./risk_app.db"
