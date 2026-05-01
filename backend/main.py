@@ -27,15 +27,18 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Firebase Admin Setup
-firebase_creds_path = os.getenv("FIREBASE_SERVICE_ACCOUNT")
-if firebase_creds_path:
+firebase_creds_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+if firebase_creds_json:
     try:
-        # Check if it's a JSON string or a file path
-        if firebase_creds_path.startswith('{'):
-            creds_dict = json.loads(firebase_creds_path)
+        if firebase_creds_json.startswith('{'):
+            # Handle potential double-escaping of newlines in the private key
+            # This is a common issue when setting JSON as an environment variable
+            creds_dict = json.loads(firebase_creds_json)
+            if "private_key" in creds_dict:
+                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
             cred = credentials.Certificate(creds_dict)
         else:
-            cred = credentials.Certificate(firebase_creds_path)
+            cred = credentials.Certificate(firebase_creds_json)
         firebase_admin.initialize_app(cred)
     except Exception as e:
         print(f"[ERROR] Firebase initialization failed: {str(e)}")
